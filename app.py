@@ -11,6 +11,7 @@ from dash.dependencies import Input, Output
 import pandas as pd
 import os
 import matplotlib
+import numpy as np
 
 
 
@@ -41,8 +42,18 @@ class dataCleaning:
 
     def cleanedDailyAvg(dataFrame):
         """Takes a data frame. Averages variables by day"""
-        temp = dataFrame[dataFrame['pH_total_scale'] != -999]
-        return temp.groupby(['Date']).mean()
+        # temp = dataFrame[dataFrame['pH_total_scale'] != -999]
+        temp = dataFrame
+        temp.loc[temp['pH_total_scale']
+                 == -999, ['pH_total_scale']] = np.nan
+        
+        # temp['Month'] = pd.DatetimeIndex(temp['Date']).month
+        # temp['Year'] = pd.DatetimeIndex(temp['Date']).year
+        # day = temp.resample('Y').mean()
+        # monthly = day.groupby(['Month'], ['Year']).mean()
+        day = temp.groupby('Date').mean()
+      
+        return  day
 
 
 #reading in data
@@ -145,6 +156,7 @@ FL_DF_AVG['site'] = 'FL'
 # create one single data frame
 all_df_avg = pd.concat([ME_DF_AVG, GA_DF_AVG, FL_DF_AVG], axis=0)
 
+
 # all_df_avg = all_df_avg[all_df_avg['xCO2 Air (wet) (umol/mol)'] > 300]
 
 #select varaibles to preserve
@@ -154,16 +166,14 @@ all_df_avg = pd.concat([ME_DF_AVG, GA_DF_AVG, FL_DF_AVG], axis=0)
 
 # get list of variables for dropdown menu                         
 variables = all_df_avg.columns.sort_values()
-variables_2_use = [ 'DOXY (umol/kg)',
-                    'H2O Air (mmol/mol)',
-                   'H2O SW (mmol/mol)', 'Latitude', 'Licor Atm Pressure (hPa)',
-                   'Licor Temp (C)', 'Longitude', 'MAPCO2 %O2', 'NTU (NTU)', 'NTU QF',
-                   'PH_QF', 'QF', 'QF.1', 'QF_pH', 'SST (C)', 'Salinity', 'dfCO2', 'dpCO2',
-                   'fCO2 Air (sat) (uatm)', 'fCO2 SW (sat) (uatm)',
+variables_2_use = [ 
+                   'SST (C)', 'Salinity',
+                   
                    'pCO2 Air (sat) (uatm)', 'pCO2 SW (sat) (uatm)',
-                   'pH_total_scale', 'site', 'xCO2 Air (dry) (umol/mol)',
-                   'xCO2 Air (wet) (umol/mol)', 'xCO2 SW (dry) (umol/mol)',
-                   'xCO2 SW (wet) (umol/mol)']
+                   'pH_total_scale', 
+                   'xCO2 Air (wet) (umol/mol)']
+
+# variable_dict = [{'var': 'DOXY (umol/kg)', 'desc': }]
 # get sites for site filter drop down
 sites = all_df_avg['site'].unique()
 sites
@@ -171,6 +181,34 @@ print(variables.sort_values())
 
 # all_df_avg[all_df_avg[]]
 # temp = dataFrame[dataFrame['SST (C)'] > 0]
+
+##### filtering bad data???
+all_df_avg.loc[all_df_avg['DOXY (umol/kg)'] < 0, ['DOXY (umol/kg)']] = np.nan
+all_df_avg.loc[all_df_avg['SST (C)'] < 0, ['SST (C)']] = np.nan
+all_df_avg.loc[all_df_avg['Salinity'] < 0, ['Salinity']] = np.nan
+
+# not sure what a good cutoff is for this 
+all_df_avg.loc[all_df_avg['dfCO2'] < -200, ['dfCO2']] = np.nan
+all_df_avg.loc[all_df_avg['fCO2 Air (sat) (uatm)']
+               < 300, ['fCO2 Air (sat) (uatm)']] = np.nan
+all_df_avg.loc[all_df_avg['fCO2 SW (sat) (uatm)']
+               < 0, ['fCO2 SW (sat) (uatm)']] = np.nan
+all_df_avg.loc[all_df_avg['pCO2 Air (sat) (uatm)']
+               < 300, ['pCO2 Air (sat) (uatm)']] = np.nan
+all_df_avg.loc[all_df_avg['pCO2 SW (sat) (uatm)']
+               < 0, ['pCO2 SW (sat) (uatm)']] = np.nan
+all_df_avg.loc[all_df_avg['xCO2 Air (dry) (umol/mol)']
+               < 300, ['xCO2 Air (dry) (umol/mol)']] = np.nan
+
+all_df_avg.loc[all_df_avg['xCO2 Air (wet) (umol/mol)']
+               < 300, ['xCO2 Air (wet) (umol/mol)']] = np.nan
+
+all_df_avg.loc[all_df_avg['xCO2 SW (dry) (umol/mol)']
+               < 0, ['xCO2 SW (dry) (umol/mol)']] = np.nan
+
+all_df_avg.loc[all_df_avg['xCO2 SW (wet) (umol/mol)']
+               < 0, ['xCO2 SW (wet) (umol/mol)']] = np.nan
+
 
 
 ################################# dash app #######################
@@ -226,8 +264,20 @@ app.layout = html.Div(children=[
 
 
         ),
+        dcc.RadioItems(
+            id='avgRange',
+            options=[
+                {'label': 'Daily', 'value': 'D'},
+                {'label': 'Weekly', 'value': 'W'},
+                {'label': 'Monthly', 'value': 'M'},
+                {'label': 'Yearly', 'value': 'Y'},
+            ],
+            value= 'Y'
+        ),
         dcc.Graph(id='indicator-graphic'),
-   ])
+   ]),
+   html.Div(id='citation',
+            children="Data from Sutton, A. J., Feely, R. A., Maenner-Jones, S., Musielwicz, S., Osborne, J., Dietrich, C., Monacci, N., Cross, J., Bott, R., Kozyr, A., Andersson, A. J., Bates, N. R., Cai, W.-J., Cronin, M. F., De Carlo, E. H., Hales, B., Howden, S. D., Lee, C. M., Manzello, D. P., McPhaden, M. J., Meléndez, M., Mickett, J. B., Newton, J. A., Noakes, S. E., Noh, J. H., Olafsdottir, S. R., Salisbury, J. E., Send, U., Trull, T. W., Vandemark, D. C., and Weller, R. A. (2019): Autonomous seawater pCO2 and pH time series from 40 surface buoys and the emergence of anthropogenic trends, Earth Syst. Sci. Data, 11, 421-439, https://doi.org/10.5194/essd-11-421-2019.")
 
 ])
 
@@ -236,9 +286,14 @@ app.layout = html.Div(children=[
     Output('indicator-graphic', 'figure'),
     Input('xaxis', 'value'),
     Input('yaxis', 'value'),
-    Input('site_selector', "value")
+    Input('site_selector', "value"),
+    Input('avgRange', 'value')
 )
-def update_graph(xaxis, yaxis, site_selector):
+def update_graph(xaxis, yaxis, site_selector, avgRange):
+    
+   
+
+
     print(f"site_selector {site_selector}")
     print(type(site_selector))
 
@@ -248,12 +303,15 @@ def update_graph(xaxis, yaxis, site_selector):
     else:
         data = all_df_avg[all_df_avg['site'] == site_selector]
 
+   
+    
 
     if xaxis == '':
         fig = px.scatter(data, y=data[yaxis], trendline="ols", color='site')
     else:
         fig = px.scatter(data , x=data[xaxis],
                          y=data[yaxis], trendline="ols", color='site')
+
 
 
     fig.update_xaxes(rangeslider_visible=True)
