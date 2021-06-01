@@ -1,0 +1,51 @@
+/* body{
+    margin:0;
+} */
+
+
+#variblesContainer{
+    display: flex;
+    justify-content:  space-evenly;
+    
+}
+#xaxis, #yaxis{
+    width: 49.5vw;
+
+   
+}
+
+#citation{
+   /* display: flex;
+    justify-content:  space-evenly; */
+    width: 100%;
+    /* position: absolute; */
+  bottom: 0;
+  
+  
+   
+}
+#citeText{
+    width: 70vw;
+   
+}
+#mapDiv{
+    display:flex;
+    align-items: center;
+    /* justify-content: space-evenly; */
+}
+#map{
+    /* width: 40vw; */
+  
+    display: inline;
+
+    padding:0;
+}
+
+#siteDescrip{
+    display: inline;
+}
+
+.axisLabel {
+    font-weight: bold;
+  
+}
