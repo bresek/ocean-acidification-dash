@@ -224,6 +224,23 @@ siteMap.update_layout(
     
     )
 
+#### Creating site specific non-interactive figures ######
+
+
+site_pH_box = px.box(all_df_avg, x='site',
+                     y='pH_total_scale', color='site',
+                       title='pH (total scale) by site')
+site_pH_box.update_layout(showlegend=False)
+
+site_pco2_box = px.box(all_df_avg, x='site',
+                       y='pCO2 SW (sat) (uatm)', color='site',
+                       title='pCO2 SW (sat) (uatm) by site')
+site_pco2_box.update_layout(showlegend=False)
+
+site_sst_box = px.box(all_df_avg, x='site',
+                      y='SST (C)', color='site',
+                      title='SST (C) by site')
+site_sst_box.update_layout(showlegend=False)
 
 # fig = px.scatter_mapbox()
 
@@ -247,6 +264,7 @@ xVariables.append(dateLabel)
 app.layout = html.Div(children=[
 
     html.H1(children='Interactive Ocean Acidification Data Explorer'),
+    # html.Hr(),
 
     html.Div(id = "interactive plot",children =[ 
         html.Div(id='variblesContainer', children=[
@@ -279,13 +297,15 @@ app.layout = html.Div(children=[
         ),
        
         dcc.Graph(id='indicator-graphic'),
+        # html.Hr(),
         html.H2(children='Study sites'),
         html.Div(id='mapDiv',children=[
             dcc.Graph(id='map', figure=siteMap),
             html.Div(id='siteDescrip',children=[
-                html.P(children="For more information on Ocean Acidification check out"),
-                html.A(
-                    children="https://oceanacidification.noaa.gov/OurChangingOcean.aspx", href='https://oceanacidification.noaa.gov/OurChangingOcean.aspx'),
+                html.Div(id='boxplots', children=[dcc.Graph(figure=site_pH_box, className='boxPlot'),
+                                                  dcc.Graph(
+                                                      figure=site_pco2_box, className='boxPlot'),
+                                                  dcc.Graph(figure=site_sst_box, className='boxPlot')]),
             ])
         ]),
         
@@ -293,8 +313,15 @@ app.layout = html.Div(children=[
    
    html.Div(id='citation',
             children=[
+                # html.Hr(),
                 html.H3(children='Data Source'),
-                html.Em(id='citeText',
+            
+
+                html.Span(
+                    children="For more information on Ocean Acidification check out: "),
+                html.A(
+                    children="https://oceanacidification.noaa.gov/OurChangingOcean.aspx", href='https://oceanacidification.noaa.gov/OurChangingOcean.aspx'),
+                html.P(id='citeText',
                        children=" Sutton, A. J., Feely, R. A., Maenner-Jones, S., Musielwicz, S., Osborne, J., Dietrich, C., Monacci, N., Cross, J., Bott, R., Kozyr, A., Andersson, A. J., Bates, N. R., Cai, W.-J., Cronin, M. F., De Carlo, E. H., Hales, B., Howden, S. D., Lee, C. M., Manzello, D. P., McPhaden, M. J., Meléndez, M., Mickett, J. B., Newton, J. A., Noakes, S. E., Noh, J. H., Olafsdottir, S. R., Salisbury, J. E., Send, U., Trull, T. W., Vandemark, D. C., and Weller, R. A. (2019): Autonomous seawater pCO2 and pH time series from 40 surface buoys and the emergence of anthropogenic trends, Earth Syst. Sci. Data, 11, 421-439, https://doi.org/10.5194/essd-11-421-2019.")
             ])
 
